@@ -10,15 +10,16 @@ export const ICON_SPECS={
     ['stud',-.5,1.21,0,.9],['stud',.5,1.21,0,.9],
     ['box',1.08,.55,.25,.1,.6,.42,'gold']
   ]},
-  // Consump: indigo, a box icon beside its name; stock in and out, QR labels -> an open supply box with a QR label.
+  // Consump: indigo, a box icon beside its name; stock in and out, issuing supplies -> a shopping cart loaded with supplies.
   consump:{color:'#4f46e5',parts:[
-    ['box',0,-.4,0,1.9,1.25,1.5,'main'],
-    ['box',-1.1,.5,0,.12,.95,1.5,'dark',0,0,.5],['box',1.1,.5,0,.12,.95,1.5,'dark',0,0,-.5],
-    ['box',0,.45,0,1.3,.45,1,'face'],
-    ['tube',.4,.95,.1,.16,.9,.16,'gold'],['tube',-.15,1,-.1,.16,1,.16,'red'],['tube',-.45,.92,.15,.16,.8,.16,'teal'],
-    ['box',0,-.4,.78,.95,.95,.06,'face'],
-    ['box',-.28,-.12,.84,.2,.2,.06,'ink'],['box',.28,-.12,.84,.2,.2,.06,'ink'],['box',0,-.4,.84,.2,.2,.06,'ink'],
-    ['box',-.28,-.68,.84,.2,.2,.06,'ink'],['box',0,-.68,.84,.2,.2,.06,'ink']
+    ['box',0,-.1,0,1.9,.12,1.1,'main'],
+    ['box',0,.3,.55,1.9,.8,.1,'main'],['box',0,.3,-.55,1.9,.8,.1,'main'],
+    ['box',-.95,.3,0,.1,.8,1.1,'main'],['box',.95,.3,0,.1,.8,1.1,'main'],
+    ['box',-.4,.4,0,.55,.6,.55,'gold'],['box',.3,.55,.05,.5,.9,.45,'face'],['tube',-.55,.9,-.15,.16,.8,.16,'red'],['tube',.7,.85,.2,.16,.7,.16,'teal'],
+    ['box',-1.1,.65,-.45,.12,.9,.12,'silver',0,0,.25],['box',-1.1,.65,.45,.12,.9,.12,'silver',0,0,.25],['box',-1.3,1.1,0,.16,.16,1.1,'silver'],
+    ['box',-.7,-.25,.5,.1,.25,.1,'silver'],['box',.7,-.25,.5,.1,.25,.1,'silver'],['box',-.7,-.25,-.5,.1,.25,.1,'silver'],['box',.7,-.25,-.5,.1,.25,.1,'silver'],
+    ['tube',-.7,-.45,.58,.4,.14,.4,'ink',1.5708],['tube',.7,-.45,.58,.4,.14,.4,'ink',1.5708],['tube',-.7,-.45,-.58,.4,.14,.4,'ink',1.5708],['tube',.7,-.45,-.58,.4,.14,.4,'ink',1.5708],
+    ['stud',-.5,.76,.55,.8],['stud',.5,.76,.55,.8]
   ]},
   // Library: a cream and sage page with butter-yellow buttons and a sparkle in its title -> a stack of books, a ribbon and a star.
   library:{color:'#7fa17a',parts:[
@@ -63,7 +64,7 @@ export const ICON_SPECS={
     ['box',0,.15,.26,.8,.2,.07,'main'],['box',0,-.85,.26,.8,.2,.07,'main'],['box',0,-.35,.26,.5,.16,.07,'main'],
     ['box',-.78,-1.0,.26,.3,.3,.07,'red'],['box',.78,-1.0,.26,.3,.3,.07,'blue']
   ]},
-  // Case summary: no page to look at yet, so it follows the name -> a case folder with papers, a yellow summary note and a magnifier.
+  // Case summary: no page to look at yet, so it follows the name -> a case folder with papers, a yellow summary note, a magnifier and a pen.
   casefile:{color:'#d9822b',parts:[
     ['box',0,-.1,-.15,2.3,1.9,.3,'dark'],['box',-.6,.98,-.15,.9,.25,.3,'dark'],
     ['box',-.1,.2,0,1.9,1.9,.1,'face'],['box',.1,.3,.08,1.9,1.9,.1,'white'],
@@ -71,6 +72,8 @@ export const ICON_SPECS={
     ['box',0,-.4,.3,2.3,1.35,.3,'main'],
     ['box',.5,-.3,.5,.9,.8,.08,'gold',0,0,-.08],
     ['box',.5,-.12,.56,.6,.08,.05,'ink'],['box',.45,-.32,.56,.5,.08,.05,'ink'],['box',.4,-.52,.56,.4,.08,.05,'ink'],
-    ['ring',-.65,-.35,.5,.28,.07,0,'face'],['box',-.4,-.65,.5,.34,.08,.08,'face',0,0,.78]
+    ['ring',-.65,-.35,.5,.28,.07,0,'face'],['box',-.4,-.65,.5,.34,.08,.08,'face',0,0,.78],
+    // a pen lying across the note: body, nib and cap along one tilted axis
+    ['tube',.75,-.15,.66,.16,1.1,.16,'blue',0,0,-.9],['tube',.233,-.56,.66,.1,.22,.1,'ink',0,0,-.9],['tube',1.26,.25,.66,.18,.2,.18,'gold',0,0,-.9]
   ]}
 };

@@ -1,4 +1,5 @@
 import {tools} from './tools.js';
+import {ICON_SPECS} from './icon-specs.js';
 import {initCompanyLocation,readCompanyLocation} from './company-location.js';
 import {getSkyNight} from './sky-model.js';
 import {createWeatherService,weatherPresets,weatherLabels,windLabel,visibilityLabel} from './weather.js';
@@ -39,7 +40,19 @@ let activityMode='standard';try{const saved=localStorage.getItem('tool-portal-ac
 function updateActivity(){document.querySelectorAll('button[data-activity]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.activity===activityMode)));world?.setActivity(activityMode);}
 document.querySelectorAll('button[data-activity]').forEach(button=>button.addEventListener('click',()=>{activityMode=button.dataset.activity;try{localStorage.setItem('tool-portal-activity',activityMode);}catch{}updateActivity();}));
 updateActivity();
-let iconURLs = {};
+// The brick icons are drawn by the 3D world a moment after the page loads, so the last drawing is kept in the browser and used at once on the
+// next visit (it is replaced only if an icon's design has changed). Until an icon exists its tile shows an empty space, not a stand-in picture.
+const ICON_CACHE_KEY='tool-hub-icons-v1';
+function iconSignature(){const text=JSON.stringify(ICON_SPECS);let hash=0;for(let i=0;i<text.length;i++)hash=(hash*31+text.charCodeAt(i))|0;return `${hash}:${text.length}`;}
+function readIconCache(){
+  try{
+    const cache=JSON.parse(localStorage.getItem(ICON_CACHE_KEY));
+    if(!cache||cache.signature!==iconSignature()||typeof cache.icons!=='object')return {};
+    return Object.fromEntries(Object.entries(cache.icons).filter(([,url])=>typeof url==='string'&&url.startsWith('data:image/png;base64,')));
+  }catch{return {};}
+}
+function saveIconCache(icons){try{localStorage.setItem(ICON_CACHE_KEY,JSON.stringify({signature:iconSignature(),icons}));}catch{}}
+let iconURLs=readIconCache(),iconsPending=true;
 let currentQuery = '';
 let lastTrigger;
 const fallbackIcons={assetra:'archive',consump:'package-open',library:'library',directory:'contact',passvault:'lock-keyhole',huoban:'users',rizhi:'calendar-days',casefile:'folder-search'};
@@ -65,6 +78,32 @@ function transitionTools(){
   uiTransition.finished.catch(()=>{});
 }
 
+// Leaving for a tool or a Google search: the origin lifts, a wash of the destination's colour grows out of it and covers the page, then the
+// page opens in a new tab (after the motion, still inside the browser's allowance for a click) and the wash fades away. With noopener the
+// browser always returns null from window.open, so its result is never used to decide anything. Reduced motion opens at once.
+const LAUNCH_MS=700,TOOL_COLORS={coral:'#e5705a',indigo:'#4f46e5',sage:'#7fa17a',blue:'#2f6fdd',teal:'#0d9488',green:'#2f6b3a',amber:'#d9822b'},GOOGLE_COLOR='#4285f4';
+let launching=false;
+function playLaunch({origin,color,message,lift,url}){
+  if(launching)return;
+  if(reduced.matches){window.open(url,'_blank','noopener,noreferrer');return;}
+  launching=true;
+  const launcher=$('.launcher'),rect=origin.getBoundingClientRect();
+  const cover=Math.ceil(Math.hypot(innerWidth,innerHeight)*2/Math.min(rect.width,rect.height));
+  const wash=document.createElement('div');wash.className='launch-wash';wash.setAttribute('aria-hidden','true');
+  wash.style.cssText=`--x:${rect.left+rect.width/2}px;--y:${rect.top+rect.height/2}px;--w:${rect.width}px;--h:${rect.height}px;--tint:${color};--cover:${cover}`;
+  document.body.append(wash);launcher.classList.add('is-launching');lift?.classList.add('is-opening');
+  $('#announcer').textContent=message;
+  setTimeout(()=>{window.open(url,'_blank','noopener,noreferrer');},LAUNCH_MS);
+  setTimeout(()=>{wash.classList.add('is-leaving');launcher.classList.remove('is-launching');lift?.classList.remove('is-opening');$('#announcer').textContent='';},LAUNCH_MS+150);
+  setTimeout(()=>{wash.remove();launching=false;},LAUNCH_MS+700);
+}
+// Modified clicks (new tab, new window) keep the plain link.
+function launchTool(tool,item,event){
+  if(launching||reduced.matches||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
+  event.preventDefault();
+  playLaunch({origin:item,lift:item,color:tool.wash||TOOL_COLORS[tool.color]||'#4f46e5',message:`正在開啟 ${tool.title}`,url:tool.url});
+}
+
 function renderTools() {
   const q = input.value.trim().toLocaleLowerCase();
   currentQuery=q;
@@ -76,15 +115,15 @@ function renderTools() {
     item.style.viewTransitionName=`tool-${t.id}`;
     if(t.url){item.href=t.url;item.target='_blank';item.rel='noopener noreferrer';}
     else item.type='button';
-    const art=iconURLs[t.icon] ? Object.assign(document.createElement('img'),{src:iconURLs[t.icon],alt:'',className:'tool-art',width:120,height:120}) : Object.assign(document.createElement('span'),{className:'tool-fallback'});
-    if(!iconURLs[t.icon])art.append(createIcon(fallbackIcons[t.icon]));
+    const art=iconURLs[t.icon] ? Object.assign(document.createElement('img'),{src:iconURLs[t.icon],alt:'',className:'tool-art',width:120,height:120}) : Object.assign(document.createElement('span'),{className:iconsPending?'tool-art':'tool-fallback'});
+    if(!iconURLs[t.icon]&&!iconsPending)art.append(createIcon(fallbackIcons[t.icon]));
     art.setAttribute('aria-hidden','true');
     const title=Object.assign(document.createElement('span'),{textContent:t.title,className:'tool-name'});
     const hint=Object.assign(document.createElement('span'),{textContent:t.url?'開啟工具':'工具資訊',className:'tile-hint'});
     const arrow=Object.assign(document.createElement('span'),{className:'tile-arrow'});arrow.append(createIcon('arrow-up-right'));arrow.setAttribute('aria-hidden','true');
     item.append(art,title,hint,arrow);
     if(!t.url){item.setAttribute('aria-haspopup','dialog');item.addEventListener('click',()=>showTool(t,item));}
-    else item.setAttribute('aria-label',`${t.title}（另開分頁）`);
+    else{item.setAttribute('aria-label',`${t.title}（另開分頁）`);item.addEventListener('click',event=>launchTool(t,item,event));}
     return item;
   }));
   $('#empty').hidden=filtered.length>0;
@@ -130,15 +169,15 @@ $('#help').addEventListener('click',()=>{
   $('#demo-area').innerHTML='<ul><li>點選工具可開啟服務或查看工具資訊。</li><li>輸入關鍵字尋找工具；按 Enter 或 Google 搜尋網路資訊。</li><li>按 Ctrl / ⌘ + K 快速搜尋，按 Esc 清除搜尋或關閉視窗。</li><li>下方可切換草原、沙漠與海岸；右上角可切換日夜、暫停動畫或調整畫質。</li></ul>';
   $('#dialog-done').textContent='開始探索';openDialog($('#help'));
 });
-function searchGoogle(){
+function searchGoogle(origin=$('#google-search')){
   const query=input.value.trim();
   if(!query){input.focus();return;}
-  window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`,'_blank','noopener,noreferrer');
+  playLaunch({origin,color:GOOGLE_COLOR,message:'正在以 Google 搜尋',url:`https://www.google.com/search?q=${encodeURIComponent(query)}`});
 }
 $('.search').addEventListener('submit',e=>{e.preventDefault();searchGoogle();});
 input.addEventListener('input',transitionTools);
 $('#clear-search').addEventListener('click',()=>{input.value='';transitionTools();input.focus();});
-$('#google-search-empty').addEventListener('click',searchGoogle);
+$('#google-search-empty').addEventListener('click',()=>searchGoogle($('#google-search-empty')));
 document.addEventListener('keydown',e=>{
   if($('#location-dialog').open||!$('#moon-preview').hidden||!$('#sun-preview')?.hidden)return;
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();if(dialog.open){closeDialog({focusTarget:input});return;}input.focus();input.select();}
@@ -376,12 +415,14 @@ try{
     end(previous){routeEditing=false;Object.assign(state,previous);applyAutoSky();lastAuto=0;updateNight();updatePause();toggleSettings(true);}
   });
   enableCollapse(document.querySelector('.route-panel'),{key:'route-panel'});
-  iconURLs=world.icons;
-  renderTools();
+  const changed=Object.keys(world.icons).some(key=>iconURLs[key]!==world.icons[key])||tools.some(t=>!iconURLs[t.icon]);
+  iconURLs=world.icons;iconsPending=false;saveIconCache(world.icons);
+  if(changed){grid.classList.add('icons-arriving');renderTools();setTimeout(()=>grid.classList.remove('icons-arriving'),600);}
   $('#render-status').textContent=reduced.matches?'已依系統偏好暫停背景，可手動播放。':'';
   document.documentElement.dataset.world='ready';
 }catch(error){
   console.error('3D initialization failed:',error);
+  iconsPending=false;renderTools();
   $('#render-status').textContent='此裝置無法啟用 3D，仍可使用搜尋與工具入口。';
   $('#pause').disabled=true;$('#quality').disabled=true;$('#auto-biome').disabled=true;
   document.documentElement.dataset.world='fallback';

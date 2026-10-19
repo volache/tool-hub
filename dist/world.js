@@ -533,6 +533,8 @@ export async function createWorld(container,options={}){
   const raycaster=new THREE.Raycaster();const groundPlane=new THREE.Plane(new THREE.Vector3(0,1,0),.3);const anchorPoint=new THREE.Vector3();
   function resize(){
     w=container.clientWidth;h=container.clientHeight;
+    // A page opened in a background tab has no size yet; laying out the coast or the camera then would fail and take the whole 3D world with it.
+    if(!w||!h)return;
     camera.aspect=w/h;camera.updateProjectionMatrix();
     camera.updateMatrixWorld();
     if(previewUfoConfig)customUfoCurve=buildUfoCurve(previewUfoConfig);
@@ -865,6 +867,8 @@ export async function createWorld(container,options={}){
   function tick(now){raf=0;if(document.hidden||(paused&&!sceneTransition&&!themeTransition&&!moonTransition&&!skyEasing&&!weatherWorld.isEasing()&&!sunWorld.isTransitioning()))return;const delta=Math.min((now-last)/1000,.1);last=now;if(!paused)animate(delta);animateTheme(delta);animateSceneTransition(delta);render();frames++;report();requestTick();}
   function requestTick(){if(!raf&&(!paused||sceneTransition||themeTransition||moonTransition||skyEasing||weatherWorld.isEasing()||sunWorld.isTransitioning())&&!document.hidden)raf=requestAnimationFrame(tick);}
   window.addEventListener('resize',resize);
+  // The container gets its size when the tab is first shown, which does not fire a window resize.
+  if('ResizeObserver' in window)new ResizeObserver(()=>resize()).observe(container);
   document.addEventListener('visibilitychange',()=>{last=performance.now();lastReport=last;frames=0;if(document.hidden){cancelAnimationFrame(raf);raf=0;}else{render();requestTick();}});
   renderer.domElement.addEventListener('webglcontextlost',event=>{event.preventDefault();cancelAnimationFrame(raf);raf=0;document.querySelector('#render-status').textContent='3D 畫面暫時中斷；工具入口仍可使用。';});
   renderer.domElement.addEventListener('webglcontextrestored',()=>{last=performance.now();document.querySelector('#render-status').textContent='3D 世界已恢復';render();requestTick();});
