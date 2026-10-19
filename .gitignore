@@ -1,0 +1,10 @@
+node_modules/
+.sites-runtime/
+.sites-checkout/
+*.tar.gz
+*.tgz
+
+.test-output/
+.claude/
+
+.test-output-run.log
